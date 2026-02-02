@@ -1,67 +1,110 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-  const [items, setItems] = useState([]);
-  const [text, setText] = useState("");
-  const [editIndex, setEditIndex] = useState(null);
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem("users");
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  const saveItem = () => {
-    if (!text.trim()) return;
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+  const [darkMode, setDarkMode] = useState(true);
+
+  /* =============================
+     SAVE TO LOCALSTORAGE
+  ============================= */
+  useEffect(() => {
+    localStorage.setItem("users", JSON.stringify(users));
+  }, [users]);
+
+  // ADD or UPDATE
+  const saveUser = () => {
+    if (!name || !email || !phone) return;
+
+    const newUser = { name, email, phone };
 
     if (editIndex !== null) {
-      const updated = [...items];
-      updated[editIndex] = text;
-      setItems(updated);
+      const updated = [...users];
+      updated[editIndex] = newUser;
+      setUsers(updated);
       setEditIndex(null);
     } else {
-      setItems([...items, text]);
+      setUsers([...users, newUser]);
     }
 
-    setText("");
+    setName("");
+    setEmail("");
+    setPhone("");
   };
 
-  const deleteItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
+  // DELETE
+  const deleteUser = (index) => {
+    setUsers(users.filter((_, i) => i !== index));
   };
 
-  const editItem = (index) => {
-    setText(items[index]);
+  // EDIT
+  const editUser = (index) => {
+    const user = users[index];
+
+    setName(user.name);
+    setEmail(user.email);
+    setPhone(user.phone);
     setEditIndex(index);
   };
 
   return (
-    <div className="app">
-      <div className="container">
-        <h1 className="hero-title">Just do it.</h1>
+    <div className={`app ${darkMode ? "dark" : "light"}`}>
+      <h1 className="hero-title">Contact Info</h1>
 
-        <div className="todo-card">
-          <div className="input-row">
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Add a task..."
-              onKeyDown={(e) => e.key === "Enter" && saveItem()}
-            />
+      <button
+        className="theme-btn"
+        onClick={() => setDarkMode(!darkMode)}
+      >
+        {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+      </button>
 
-            <button onClick={saveItem}>
-              {editIndex !== null ? "Update" : "I Got This!"}
-            </button>
+      {/* INPUTS */}
+      <div className="form-row">
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+
+        <button onClick={saveUser}>
+          {editIndex !== null ? "Update" : "Add"}
+        </button>
+      </div>
+
+      {/* LIST */}
+      <div className="todo-card">
+        {users.map((user, index) => (
+          <div key={index} className="list-item">
+            <span>{user.name}</span>
+            <span>{user.email}</span>
+            <span>{user.phone}</span>
+
+            <div>
+              <button onClick={() => editUser(index)}>✏️</button>
+              <button onClick={() => deleteUser(index)}>🗑</button>
+            </div>
           </div>
-
-          <ul className="list">
-            {items.map((item, index) => (
-              <li key={index} className="list-item">
-                <span>{item}</span>
-
-                <div>
-                  <button onClick={() => editItem(index)}>✓</button>
-                  <button onClick={() => deleteItem(index)}>🗑</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+        ))}
       </div>
     </div>
   );
